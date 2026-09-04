@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#f5f6f4" />
+    <title>本地音视频转文档</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="tool-name"><span class="tool-mark" aria-hidden="true"></span><span>本地音视频转文档</span></div>
+      <div class="local-note" id="serviceState"><span class="status-dot"></span><span>正在检查本地模型</span></div>
+    </header>
+
+    <main>
+      <section class="intro">
+        <h1>导入文件，生成文档</h1>
+        <p>支持一次选择多个音视频。转写在本机依次完成，不调用在线模型。</p>
+      </section>
+
+      <section class="card upload-card">
+        <div class="step-title">
+          <span>1</span>
+          <div><h2>选择音视频文件</h2><p>每个文件生成一份结果，也可以合并导出全部结果。</p></div>
+        </div>
+
+        <button class="file-picker" id="filePicker">
+          <span class="upload-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 16V4M7.5 8.5 12 4l4.5 4.5M5 20h14"/></svg></span>
+          <strong>选择一个或多个文件</strong>
+          <small>也可以把文件拖到这里</small>
+        </button>
+        <input id="fileInput" type="file" accept="audio/*,video/*,.mkv,.ogv,.oga" multiple hidden />
+
+        <div class="file-section" id="fileSection" hidden>
+          <div class="file-section-head"><strong id="fileCount"></strong><button class="text-button" id="addMoreButton">继续添加</button></div>
+          <div class="file-list" id="fileList"></div>
+        </div>
+
+        <div class="privacy-line">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="m9 12 2 2 4-4"/></svg>
+          <span>文件只发送给当前机器上的识别服务，临时文件处理完成后立即删除。</span>
+        </div>
+
+        <div class="upload-actions">
+          <button class="secondary-button" id="clearButton" hidden>清空</button>
+          <button class="primary-button" id="startButton" disabled>开始本地转写</button>
+        </div>
+      </section>
+
+      <section class="card result-card" id="resultCard" hidden>
+        <div class="result-heading">
+          <div class="step-title"><span>2</span><div><h2>复核与导出</h2><p id="resultSummary">等待转写结果</p></div></div>
+          <button class="primary-button" id="exportAllButton" disabled>合并导出全部</button>
+        </div>
+        <div class="result-list" id="resultList"></div>
+      </section>
+    </main>
+
+    <div class="toast" id="toast" role="status"></div>
+    <script src="./document-utils.js"></script>
+    <script src="./app.js"></script>
+  </body>
+</html>
