@@ -1,0 +1,96 @@
+name: Build and publish release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out architecture-only source
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Install JavaScript dependencies
+        run: npm ci
+
+      - name: Run import and demo tests
+        run: npm test
+
+      - name: Build PWA and Excel template
+        run: |
+          npm run build
+          npm run template -- release/quiz-forge-import-template.xlsx
+
+      - name: Install Android SDK packages
+        run: |
+          yes | sdkmanager --licenses >/dev/null || true
+          sdkmanager 'platforms;android-36' 'build-tools;36.0.0'
+
+      - name: Sync Capacitor Android project
+        run: npx cap sync android
+
+      - name: Restore release signing key
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          mkdir -p android/app/signing
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > android/app/signing/quiz-forge-release.keystore
+
+      - name: Build signed Android release
+        env:
+          ANDROID_KEYSTORE_PATH: signing/quiz-forge-release.keystore
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: cd android && ./gradlew assembleRelease
+
+      - name: Package release files
+        shell: bash
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          if [ "$version" = "$GITHUB_REF_NAME" ]; then version="manual-${GITHUB_RUN_NUMBER}"; fi
+          (cd dist && zip -qr "../release/quiz-forge-pwa-${version}.zip" .)
+          cp android/app/build/outputs/apk/release/app-release.apk "release/quiz-forge-android-${version}.apk"
+          (cd release && sha256sum *.apk *.xlsx *.zip > SHA256SUMS.txt)
+
+      - name: Verify private datasets are absent
+        shell: bash
+        run: |
+          test ! -e public/data/questions.json
+          test ! -e dist/data/questions.json
+          ! find android/app/src/main/assets/public -type f | grep -E '/data/(questions|manifest)\.json$'
+
+      - name: Publish GitHub release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          body: |
+            无真实业务题库发布版，仅含小学加减法演示题。
+
+            - Android：签名 Release APK，可直接安装并在应用内导入 Excel
+            - PWA：静态 Web 发布包
+            - Excel：固定 17 列导入模板，含小学加减法示例
+            - SHA256SUMS.txt：发布文件校验值
+          files: |
+            release/quiz-forge-android-*.apk
+            release/quiz-forge-pwa-*.zip
+            release/quiz-forge-import-template.xlsx
+            release/SHA256SUMS.txt
