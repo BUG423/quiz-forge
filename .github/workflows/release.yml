@@ -80,17 +80,14 @@ jobs:
 
       - name: Publish GitHub release
         if: startsWith(github.ref, 'refs/tags/')
-        uses: softprops/action-gh-release@v2
-        with:
-          body: |
-            无真实业务题库发布版，仅含小学加减法演示题。
-
-            - Android：签名 Release APK，可直接安装并在应用内导入 Excel
-            - PWA：静态 Web 发布包
-            - Excel：固定 17 列导入模板，含小学加减法示例
-            - SHA256SUMS.txt：发布文件校验值
-          files: |
-            release/quiz-forge-android-*.apk
-            release/quiz-forge-pwa-*.zip
-            release/quiz-forge-import-template.xlsx
-            release/SHA256SUMS.txt
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            release/quiz-forge-android-*.apk \
+            release/quiz-forge-pwa-*.zip \
+            release/quiz-forge-import-template.xlsx \
+            release/SHA256SUMS.txt \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "$GITHUB_REF_NAME" \
+            --notes "无真实业务题库发布版，仅含小学加减法演示题。包含签名 Android Release APK、PWA 静态包、固定 17 列 Excel 导入模板和 SHA256 校验文件。"
