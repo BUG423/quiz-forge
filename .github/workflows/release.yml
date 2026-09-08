@@ -90,4 +90,4 @@ jobs:
             release/SHA256SUMS.txt \
             --repo "$GITHUB_REPOSITORY" \
             --title "$GITHUB_REF_NAME" \
-            --notes "无真实业务题库发布版，仅含小学加减法演示题。包含签名 Android Release APK、PWA 静态包、固定 17 列 Excel 导入模板和 SHA256 校验文件。"
+            --notes "无真实业务题库发布版，仅含小学加减法演示题。新增按表头自动识别的 Excel 导入、隐藏工作表过滤和低内存读取，兼容标准模板及常见题库列名。包含签名 Android Release APK、PWA 静态包、Excel 导入模板和 SHA256 校验文件。"
