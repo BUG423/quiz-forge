@@ -1,0 +1,15 @@
+{
+  "schema_version": "word-display-names-v1",
+  "scope": "Word presentation only; source files, asset identity, hashes, evidence and catalog order are immutable.",
+  "entries": [
+    {
+      "asset_id": "2026/video/<source-sha256>",
+      "source_sha256": "<64-character-source-sha256>",
+      "source_name": "<local-source-file-name>.mp4",
+      "catalog_position": 1,
+      "catalog_suborder": 1,
+      "display_title": "示例正式课程名称",
+      "basis": "填写语音开场、画面标题或权威目录中的命名依据。"
+    }
+  ]
+}

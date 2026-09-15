@@ -3,5 +3,20 @@
 models/
 outputs/
 test-data/
+data/
 __pycache__/
 *.pyc
+
+# Private project identity, catalog and reviewed-content artifacts.
+# Keep these files locally; never force-add them to a public branch.
+config/word_display_names.json
+docs/batch-2025-pipeline.md
+docs/exam-points-catalog-coverage.md
+docs/exam-points-progress.md
+docs/first-principles-rebuild-plan.md
+docs/scene-ocr-performance-note.md
+docs/single-video-pipeline.md
+scripts/build_2026_master.py
+scripts/build_first_principles_manifest.py
+scripts/build_reviewed_word.py
+tests/test_build_first_principles_manifest.py
