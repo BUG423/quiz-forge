@@ -20,7 +20,8 @@ export default function QuizSession({ questions, progress, mode = 'practice', in
   const [index, setIndex] = useState(() => Math.min(initialSession?.index ?? 0, questions.length - 1))
   const [responses, setResponses] = useState<Record<string, string[]>>(() => initialSession?.responses ?? {})
   const [judgements, setJudgements] = useState<Record<string, boolean>>(() => initialSession?.judgements ?? {})
-  const [finished, setFinished] = useState(false)
+  const [result, setResult] = useState<{ answeredCount: number; correctCount: number; totalCount: number } | null>(null)
+  const completed = useRef(false)
   const startedAt = useRef(initialSession?.startedAt ?? new Date().toISOString())
   const touchStart = useRef<{ x: number; y: number } | null>(null)
   const question = questions[index]
@@ -31,8 +32,8 @@ export default function QuizSession({ questions, progress, mode = 'practice', in
   const snapshot = (): PracticeSession => ({ id: 'active', mode, questionIds: questions.map((item) => item.id), index, responses, judgements, startedAt: startedAt.current, updatedAt: new Date().toISOString() })
 
   useEffect(() => {
-    if (!finished) onSessionChange?.(snapshot())
-  }, [finished, index, judgements, responses])
+    if (!result) onSessionChange?.(snapshot())
+  }, [result, index, judgements, responses])
 
   const setAnswer = (answer: string[]) => {
     setResponses((current) => ({ ...current, [question.id]: answer }))
@@ -76,29 +77,37 @@ export default function QuizSession({ questions, progress, mode = 'practice', in
   const unanswered = useMemo(() => questions.filter((item) => !Object.hasOwn(judgements, item.id)), [judgements, questions])
 
   const exitSession = () => {
-    if (!finished) onSessionChange?.(snapshot())
+    if (!result) onSessionChange?.(snapshot())
     onExit()
   }
 
   const finishSession = () => {
+    if (completed.current) return
+    completed.current = true
+    let finalJudgements = judgements
     if (mode === 'exam') {
-      const examJudgements: Record<string, boolean> = {}
+      finalJudgements = {}
       for (const item of questions) {
         const answer = responses[item.id] ?? []
         if (!answer.length || (item.answerMode === 'fill' && !answer[0]?.trim())) continue
         const correct = isAnswerCorrect(item.answerMode, answer, item.answers)
-        examJudgements[item.id] = correct
+        finalJudgements[item.id] = correct
         onRecord(item.id, correct)
       }
-      setJudgements(examJudgements)
     }
-    setFinished(true)
+    setResult({
+      answeredCount: questions.filter((item) => Object.hasOwn(finalJudgements, item.id)).length,
+      correctCount: questions.filter((item) => finalJudgements[item.id]).length,
+      totalCount: questions.length,
+    })
     onComplete?.()
   }
 
-  if (finished) {
-    const score = answeredCount ? Math.round(correctCount / answeredCount * 100) : 0
-    return <main className="quiz-screen result-screen"><section className="frost-card simple-result"><span className="result-spark"><Sparkles size={30} /></span><small>{mode === 'exam' ? '模拟考试' : '本次练习'}</small><h1>{score}<em>分</em></h1><p>答对 {correctCount} 题 · 答错 {answeredCount - correctCount} 题 · 跳过 {questions.length - answeredCount} 题</p><div className="result-bars"><span><i style={{ width: `${questions.length ? answeredCount / questions.length * 100 : 0}%` }} /></span></div><div className="result-buttons">{mode === 'practice' && unanswered.length > 0 && <button className="glass-button" onClick={() => { setIndex(questions.findIndex((item) => item.id === unanswered[0].id)); setFinished(false) }}>继续完成 {unanswered.length} 道题</button>}<button className="dark-button" onClick={onExit}>返回首页</button></div></section></main>
+  if (result) {
+    const { answeredCount: resultAnsweredCount, correctCount: resultCorrectCount, totalCount } = result
+    const scoreDenominator = mode === 'exam' ? totalCount : resultAnsweredCount
+    const score = scoreDenominator ? Math.round(resultCorrectCount / scoreDenominator * 100) : 0
+    return <main className="quiz-screen result-screen"><section className="frost-card simple-result"><span className="result-spark"><Sparkles size={30} /></span><small>{mode === 'exam' ? '模拟考试' : '本次练习'}</small><h1>{score}<em>分</em></h1><p>共 {totalCount} 题 · 答对 {resultCorrectCount} 题 · 答错 {resultAnsweredCount - resultCorrectCount} 题 · 跳过 {totalCount - resultAnsweredCount} 题</p><div className="result-bars"><span><i style={{ width: `${totalCount ? resultAnsweredCount / totalCount * 100 : 0}%` }} /></span></div><div className="result-buttons">{mode === 'practice' && unanswered.length > 0 && <button className="glass-button" onClick={() => { setIndex(questions.findIndex((item) => item.id === unanswered[0].id)); completed.current = false; setResult(null) }}>继续完成 {unanswered.length} 道题</button>}<button className="dark-button" onClick={onExit}>返回首页</button></div></section></main>
   }
 
   const displayOptions = question.answerMode === 'judge' ? [{ key: 'T', text: '正确' }, { key: 'F', text: '错误' }] : question.options

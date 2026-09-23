@@ -74,12 +74,17 @@ export async function initializeDatabase() {
     ])
     const bundledBankIds = new Set(existingBanks.filter((bank) => bank.origin !== 'upload').map((bank) => bank.id))
     const uploadedBankIds = new Set(existingBanks.filter((bank) => bank.origin === 'upload').map((bank) => bank.id))
-    const tx = database.transaction(['banks', 'questions', 'meta'], 'readwrite')
+    const nextQuestions = new Map(dataset.questions.filter((question) => !uploadedBankIds.has(question.bankId)).map((question) => [question.id, question.bankId]))
+    const tx = database.transaction(['banks', 'questions', 'progress', 'meta'], 'readwrite')
     const bankStore = tx.objectStore('banks')
     const questionStore = tx.objectStore('questions')
+    const progressStore = tx.objectStore('progress')
     for (const bankId of bundledBankIds) bankStore.delete(bankId)
     for (const question of existingQuestions) {
-      if (bundledBankIds.has(question.bankId)) questionStore.delete(question.id)
+      if (bundledBankIds.has(question.bankId)) {
+        questionStore.delete(question.id)
+        if (nextQuestions.get(question.id) !== question.bankId) progressStore.delete(question.id)
+      }
     }
     for (const bank of dataset.banks) {
       if (!uploadedBankIds.has(bank.id)) bankStore.put({ ...bank, origin: 'bundled' })
@@ -114,6 +119,21 @@ export async function saveProgress(progress: Progress) {
   const database = await openDatabase()
   const tx = database.transaction('progress', 'readwrite')
   tx.objectStore('progress').put(progress)
+  await transactionDone(tx)
+  database.close()
+}
+
+export async function clearWrongProgress(questionIds: string[]) {
+  const uniqueIds = [...new Set(questionIds)]
+  if (uniqueIds.length === 0) return
+
+  const database = await openDatabase()
+  const tx = database.transaction('progress', 'readwrite')
+  const store = tx.objectStore('progress')
+  const records = await Promise.all(uniqueIds.map((id) => requestResult<Progress | undefined>(store.get(id))))
+  for (const progress of records) {
+    if (progress?.wrong) store.put({ ...progress, wrong: 0 })
+  }
   await transactionDone(tx)
   database.close()
 }
@@ -153,11 +173,16 @@ export function clearActivePracticeSession() {
 
 export async function replaceBank(bank: QuestionBank, questions: Question[]) {
   const database = await openDatabase()
-  const tx = database.transaction(['banks', 'questions'], 'readwrite')
+  const tx = database.transaction(['banks', 'questions', 'progress'], 'readwrite')
   const questionStore = tx.objectStore('questions')
+  const progressStore = tx.objectStore('progress')
   const index = questionStore.index('bankId')
   const oldKeys = await requestResult<IDBValidKey[]>(index.getAllKeys(bank.id))
-  for (const key of oldKeys) questionStore.delete(key)
+  const replacementIds = new Set(questions.map((question) => question.id))
+  for (const key of oldKeys) {
+    questionStore.delete(key)
+    if (typeof key !== 'string' || !replacementIds.has(key)) progressStore.delete(key)
+  }
   tx.objectStore('banks').put({ ...bank, origin: 'upload' })
   for (const question of questions) questionStore.put(question)
   await transactionDone(tx)
@@ -166,10 +191,14 @@ export async function replaceBank(bank: QuestionBank, questions: Question[]) {
 
 export async function deleteBank(bankId: string) {
   const database = await openDatabase()
-  const tx = database.transaction(['banks', 'questions'], 'readwrite')
+  const tx = database.transaction(['banks', 'questions', 'progress'], 'readwrite')
   const questionStore = tx.objectStore('questions')
+  const progressStore = tx.objectStore('progress')
   const keys = await requestResult<IDBValidKey[]>(questionStore.index('bankId').getAllKeys(bankId))
-  for (const key of keys) questionStore.delete(key)
+  for (const key of keys) {
+    questionStore.delete(key)
+    progressStore.delete(key)
+  }
   tx.objectStore('banks').delete(bankId)
   await transactionDone(tx)
   database.close()

@@ -1,7 +1,7 @@
 {
   "name": "anquan-practice",
   "private": true,
-  "version": "1.2.3",
+  "version": "1.2.4",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -9,6 +9,7 @@
     "preview": "vite preview",
     "test": "vitest run",
     "import:source": "node scripts/import-source.mjs",
+    "convert:banks": "node scripts/convert-banks.mjs",
     "template": "node scripts/generate-template.mjs",
     "icons": "node scripts/generate-icons.mjs",
     "android:sync": "npm run build && cap sync android",

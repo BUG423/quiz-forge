@@ -1,0 +1,88 @@
+/* 首页：筛选在前，快捷操作随后；较窄屏幕允许自然滚动。 */
+.study-home {
+  width: min(1040px, 100%);
+  min-height: 100dvh;
+  height: auto;
+  margin: 0 auto;
+  padding: calc(24px + env(safe-area-inset-top)) 20px calc(24px + env(safe-area-inset-bottom));
+  display: block;
+  overflow: visible;
+}
+.home-console { min-height: 0; display: grid; grid-template-columns: minmax(0, 1.65fr) minmax(270px, .75fr); gap: 14px; align-items: start; }
+.practice-console, .record-console { min-height: 0; border-radius: 24px; }
+.practice-console { padding: 28px; gap: 0; }
+.record-console { padding: 25px; }
+.console-heading { min-height: 46px; }
+.console-heading > div { gap: 12px; }
+.console-heading h1 { font-size: 22px; }
+.console-heading p { font-size: 13px; }
+.home-settings { flex: 0 0 auto; width: 44px; height: 44px; border: 1px solid #e8ece9; box-shadow: none; }
+.console-fields { margin-top: 28px; }
+.console-fields label > span, .console-options .field-caption { font-size: 13px; }
+.console-fields select { min-height: 48px; }
+.console-options { margin-top: 22px; }
+.console-options .ios-segment button { font-size: 13px; }
+.practice-console > .life-toggle { width: fit-content; min-height: 44px; margin: 15px 0 18px; font-size: 13px; }
+.practice-actions { margin-top: 2px; }
+.start-practice, .resume-practice { min-height: 52px; }
+.record-heading h2 { font-size: 18px; }
+.record-heading p { max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; }
+.collection-actions { margin-top: 25px; gap: 10px; }
+.collection-action { min-height: 66px; padding: 10px 13px; }
+.collection-action b { font-size: 14px; }
+.collection-action small { font-size: 11px; }
+.collection-action > span { gap: 11px; }
+.collection-action > svg { flex: 0 0 auto; }
+
+.wrong-overlay { position: fixed; inset: 0; z-index: 90; padding: 22px; display: flex; justify-content: flex-end; background: rgba(22, 29, 27, .48); }
+.wrong-panel { width: min(480px, 100%); height: 100%; overflow: hidden; border-radius: 28px; display: flex; flex-direction: column; background: #f6f7f6; box-shadow: 0 28px 90px rgba(14, 24, 21, .3); }
+.wrong-panel > header { min-height: 86px; padding: 16px 18px 16px 24px; border-bottom: 1px solid #e4e9e5; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.wrong-panel > header small { color: #6a7771; font-size: 12px; }
+.wrong-panel > header h2 { max-width: 360px; margin: 4px 0 0; overflow: hidden; color: var(--ink); font-size: 20px; text-overflow: ellipsis; white-space: nowrap; }
+.wrong-toolbar { min-height: 58px; padding: 9px 22px; display: flex; align-items: center; justify-content: space-between; gap: 10px; color: #63716b; font-size: 13px; }
+.wrong-toolbar button { min-height: 44px; padding: 0 11px; border: 0; border-radius: 11px; display: flex; align-items: center; gap: 6px; color: #a35043; background: #f8e9e5; font-size: 12px; font-weight: 650; cursor: pointer; }
+.wrong-toolbar button:disabled, .wrong-question button:disabled, .wrong-panel footer button:disabled { opacity: .45; cursor: default; }
+.wrong-error { margin: 0 18px 8px; padding: 9px 12px; border-radius: 10px; color: #9a473b; background: #f8e9e5; font-size: 12px; }
+.wrong-list { min-height: 0; padding: 2px 16px 20px; overflow-y: auto; flex: 1; }
+.wrong-bank-row { width: 100%; min-height: 68px; margin-top: 8px; padding: 12px 15px; border: 1px solid #e5ebe7; border-radius: 15px; display: flex; align-items: center; justify-content: space-between; gap: 10px; text-align: left; background: #fff; cursor: pointer; }
+.wrong-bank-row span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; font-weight: 650; }
+.wrong-bank-row small { display: block; margin-top: 3px; color: #74807b; font-size: 11px; font-weight: 400; }
+.wrong-question { min-height: 87px; margin-top: 8px; padding: 14px 11px 14px 15px; border: 1px solid #e5ebe7; border-radius: 15px; display: flex; align-items: center; justify-content: space-between; gap: 9px; background: #fff; }
+.wrong-question > div { min-width: 0; }
+.wrong-question small { color: #86918c; font-size: 11px; }
+.wrong-question p { margin: 5px 0 0; overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; color: #27342f; font-size: 13px; line-height: 1.5; }
+.wrong-question button { min-width: 56px; min-height: 44px; padding: 3px; border: 0; border-radius: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; color: #a35043; background: #fbefeb; font-size: 10px; cursor: pointer; }
+.wrong-empty { margin: 35px 0; color: #74807b; text-align: center; font-size: 14px; }
+.wrong-panel footer { padding: 12px 18px calc(12px + env(safe-area-inset-bottom)); border-top: 1px solid #e4e9e5; display: flex; justify-content: flex-end; gap: 9px; background: #f6f7f6; }
+.wrong-panel footer button { min-height: 44px; font-size: 13px; }
+
+@media (max-width: 760px) {
+  .study-home { padding: calc(12px + env(safe-area-inset-top)) 12px calc(24px + env(safe-area-inset-bottom)); }
+  .home-console { grid-template-columns: 1fr; gap: 12px; }
+  .practice-console { padding: 20px; }
+  .record-console { padding: 20px; }
+  .collection-actions { margin-top: 16px; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .collection-action { min-height: 76px; padding: 10px; }
+  .collection-action > span { gap: 7px; }
+  .collection-action > svg { display: none; }
+  .collection-action b { font-size: 12px; }
+  .collection-action small { font-size: 10px; line-height: 1.35; }
+}
+@media (max-width: 500px) {
+  .console-heading h1 { font-size: 20px; }
+  .console-fields { margin-top: 20px; grid-template-columns: 1fr 1fr; }
+  .console-fields .bank-field { grid-column: 1 / -1; }
+  .console-options { margin-top: 17px; gap: 9px; }
+  .console-options .ios-segment button { font-size: 12px; }
+  .practice-console > .life-toggle { margin: 12px 0 16px; }
+  .practice-actions.has-resume { grid-template-columns: 1fr; }
+  .record-heading { display: flex; }
+  .record-console { min-height: 0; }
+  .collection-actions { grid-template-columns: 1fr; gap: 7px; }
+  .collection-action { min-height: 58px; }
+  .collection-action > svg { display: block; }
+  .collection-action b { font-size: 13px; }
+  .collection-action small { font-size: 11px; }
+  .wrong-overlay { padding: 0; align-items: flex-end; }
+  .wrong-panel { width: 100%; height: min(92dvh, 840px); border-radius: 26px 26px 0 0; }
+}

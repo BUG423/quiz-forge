@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { PracticeSession, Question } from '../types'
 import QuizSession from './QuizSession'
@@ -50,12 +50,36 @@ describe('quiz interaction', () => {
     expect(screen.getByText('[OPTION_B]').closest('button')?.classList.contains('picked')).toBe(true)
   })
 
-  it('keeps answers private during an exam and grades them on hand-in', () => {
-    render(<QuizSession {...props} questions={[questions[0]]} mode="exam" />)
+  it('grades an exam once and scores skipped questions against the full paper', () => {
+    const onComplete = vi.fn()
+    render(<QuizSession {...props} questions={questions} mode="exam" onComplete={onComplete} />)
     fireEvent.click(screen.getByText('[OPTION_A]'))
     expect(screen.queryByText('回答正确')).toBeNull()
-    fireEvent.click(screen.getAllByText('交卷')[0])
-    expect(screen.getByText('100')).toBeTruthy()
+    fireEvent.click(screen.getByText('下一题'))
+    fireEvent.click(screen.getByText('[OPTION_C]'))
+    fireEvent.click(screen.getByText('下一题'))
+    const handIn = screen.getAllByText('交卷')[0]
+    act(() => {
+      fireEvent.click(handIn)
+      fireEvent.click(handIn)
+    })
+    expect(screen.getByText('33')).toBeTruthy()
+    expect(screen.getByText('共 3 题 · 答对 1 题 · 答错 1 题 · 跳过 1 题')).toBeTruthy()
     expect(props.onRecord).toHaveBeenCalledWith('single', true)
+    expect(props.onRecord).toHaveBeenCalledWith('multiple', false)
+    expect(props.onRecord).toHaveBeenCalledTimes(2)
+    expect(onComplete).toHaveBeenCalledTimes(1)
+  })
+
+  it('keeps the practice score based on submitted answers and can resume skipped questions', () => {
+    render(<QuizSession {...props} questions={questions} />)
+    fireEvent.click(screen.getByText('[OPTION_A]'))
+    fireEvent.click(screen.getByText('下一题'))
+    fireEvent.click(screen.getByText('下一题'))
+    fireEvent.click(screen.getByText('完成练习'))
+    expect(screen.getByText('100')).toBeTruthy()
+    expect(screen.getByText('共 3 题 · 答对 1 题 · 答错 0 题 · 跳过 2 题')).toBeTruthy()
+    fireEvent.click(screen.getByText('继续完成 2 道题'))
+    expect(screen.getByText('[MULTIPLE_STEM]')).toBeTruthy()
   })
 })

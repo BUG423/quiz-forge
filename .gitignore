@@ -16,6 +16,7 @@ dev-dist/
 *.key
 
 # Private question-bank inputs and generated datasets
+/data/
 /public/data/
 /release/
 /android/app/src/main/assets/public/

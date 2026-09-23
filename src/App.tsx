@@ -1,9 +1,9 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { AlertTriangle, LoaderCircle } from 'lucide-react'
 import QuizSession from './components/QuizSession'
 import SettingsSheet from './components/SettingsSheet'
 import StudyHome from './components/StudyHome'
-import { clearActivePracticeSession, deleteBank, initializeDatabase, loadActivePracticeSession, loadLibrary, replaceBank, saveActivePracticeSession, saveProgress } from './services/database'
+import { clearActivePracticeSession, clearWrongProgress, deleteBank, initializeDatabase, loadActivePracticeSession, loadLibrary, replaceBank, saveActivePracticeSession, saveProgress } from './services/database'
 import type { ImportResult, PracticeSession, Progress, Question, QuestionBank, QuizMode } from './types'
 
 interface InstallPromptEvent extends Event {
@@ -21,6 +21,7 @@ export default function App() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [installPrompt, setInstallPrompt] = useState<InstallPromptEvent | null>(null)
+  const progressWrites = useRef<Promise<void>>(Promise.resolve())
   const [runningAsApp] = useState(() => {
     const capacitorWindow = window as typeof window & { Capacitor?: { isNativePlatform?: () => boolean } }
     return window.matchMedia('(display-mode: standalone)').matches || Boolean(capacitorWindow.Capacitor?.isNativePlatform?.())
@@ -63,7 +64,7 @@ export default function App() {
       const old = next.get(questionId) ?? { questionId, attempts: 0, correct: 0, wrong: 0, starred: false }
       const updated = { ...old, attempts: old.attempts + 1, correct: old.correct + (correct ? 1 : 0), wrong: old.wrong + (correct ? 0 : 1), lastAnsweredAt: new Date().toISOString() }
       next.set(questionId, updated)
-      void saveProgress(updated)
+      progressWrites.current = progressWrites.current.then(() => saveProgress(updated))
       return next
     })
   }
@@ -74,7 +75,20 @@ export default function App() {
       const old = next.get(questionId) ?? { questionId, attempts: 0, correct: 0, wrong: 0, starred: false }
       const updated = { ...old, starred: !old.starred }
       next.set(questionId, updated)
-      void saveProgress(updated)
+      progressWrites.current = progressWrites.current.then(() => saveProgress(updated))
+      return next
+    })
+  }
+
+  const clearWrong = async (questionIds: string[]) => {
+    await progressWrites.current
+    await clearWrongProgress(questionIds)
+    setProgress((current) => {
+      const next = new Map(current)
+      for (const id of questionIds) {
+        const item = next.get(id)
+        if (item) next.set(id, { ...item, wrong: 0 })
+      }
       return next
     })
   }
@@ -155,7 +169,7 @@ export default function App() {
   if (error) return <div className="app-state error"><AlertTriangle size={36} /><b>题库打开失败</b><p>{error}</p><button className="dark-button" onClick={() => window.location.reload()}>重新加载</button></div>
 
   return <div className="single-page-app">
-    {session ? <QuizSession questions={session.questions} progress={progress} mode={session.snapshot.mode} initialSession={session.snapshot} onSessionChange={persistSession} onComplete={completeSession} onRecord={recordAnswer} onToggleStar={toggleStar} onExit={() => setSession(null)} onSettings={() => setSettingsOpen(true)} /> : <StudyHome banks={banks} questions={questions} progress={progress} activeSession={savedSession} onContinue={continuePractice} onStart={startPractice} onSettings={() => setSettingsOpen(true)} />}
+    {session ? <QuizSession questions={session.questions} progress={progress} mode={session.snapshot.mode} initialSession={session.snapshot} onSessionChange={persistSession} onComplete={completeSession} onRecord={recordAnswer} onToggleStar={toggleStar} onExit={() => setSession(null)} onSettings={() => setSettingsOpen(true)} /> : <StudyHome banks={banks} questions={questions} progress={progress} activeSession={savedSession} onContinue={continuePractice} onStart={startPractice} onClearWrong={clearWrong} onSettings={() => setSettingsOpen(true)} />}
     <SettingsSheet open={settingsOpen} banks={banks} onClose={() => setSettingsOpen(false)} onImport={importBank} onDelete={async (bank) => { await deleteBank(bank.id); await reload() }} onInstall={installAction} />
   </div>
 }
