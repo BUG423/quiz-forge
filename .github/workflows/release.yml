@@ -13,7 +13,7 @@ jobs:
   release:
     runs-on: ubuntu-latest
     steps:
-      - name: Check out architecture-only source
+      - name: Check out release source and bundled banks
         uses: actions/checkout@v5
 
       - name: Set up Node.js
@@ -36,7 +36,7 @@ jobs:
       - name: Install JavaScript dependencies
         run: npm ci
 
-      - name: Run import and demo tests
+      - name: Run import and bundled-bank tests
         run: npm test
 
       - name: Build PWA and Excel template
@@ -71,12 +71,15 @@ jobs:
           cp android/app/build/outputs/apk/release/app-release.apk "release/quiz-forge-android-${version}.apk"
           (cd release && sha256sum *.apk *.xlsx *.zip > SHA256SUMS.txt)
 
-      - name: Verify private datasets are absent
+      - name: Verify bundled banks are in both app packages
         shell: bash
         run: |
-          test ! -e public/data/questions.json
-          test ! -e dist/data/questions.json
-          ! find android/app/src/main/assets/public -type f | grep -E '/data/(questions|manifest)\.json$'
+          test -s public/data/questions.json
+          test -s public/data/manifest.json
+          cmp public/data/questions.json dist/data/questions.json
+          cmp public/data/manifest.json dist/data/manifest.json
+          cmp public/data/questions.json android/app/src/main/assets/public/data/questions.json
+          cmp public/data/manifest.json android/app/src/main/assets/public/data/manifest.json
 
       - name: Publish GitHub release
         if: startsWith(github.ref, 'refs/tags/')

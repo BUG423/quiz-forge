@@ -2,7 +2,7 @@
 
 ## 架构边界
 
-沿用 React + TypeScript 页面、Excel 导入器、IndexedDB 本地题库与进度、Capacitor/PWA 离线构建。`data/` 存放原始与转换后的私有题库，整个目录从 Git 排除；公开构建仍只带演示题。题目和作答记录不上传。
+沿用 React + TypeScript 页面、Excel 导入器、IndexedDB 本地题库与进度、Capacitor/PWA 离线构建。`data/` 存放原始与转换后的 Excel，整个目录从 Git 排除；经题库提供者确认，标准化后的 7 份题库从 `public/data/` 进入公开构建。作答记录不上传。
 
 ## 需求与验收
 

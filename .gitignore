@@ -15,9 +15,8 @@ dev-dist/
 *.pem
 *.key
 
-# Private question-bank inputs and generated datasets
+# Local source workbooks and release artifacts
 /data/
-/public/data/
 /release/
 /android/app/src/main/assets/public/
 *.xlsx
